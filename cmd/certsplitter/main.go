@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -10,6 +11,10 @@ import (
 	"path/filepath"
 	"strings"
 )
+
+type Certs struct {
+	TrustedCACertificates []string `json:"trusted_ca_certificates"`
+}
 
 func main() {
 	log.SetOutput(os.Stderr)
@@ -34,17 +39,28 @@ func main() {
 		os.Exit(1)
 	}
 
+	certs := Certs{}
+	certFileFmt := "trusted_ca_%d.crt"
+	if strings.Contains(trustedCertsPath, ".json") {
+		err := json.Unmarshal(data, &certs)
+		if err != nil {
+			log.Println(err)
+			os.Exit(1)
+		}
+		certFileFmt = "container-trusted-ca-%d.crt"
+	} else {
+		certs = splitCerts(string(data))
+	}
+
 	outputDir := flag.Args()[1]
-	certs := splitCerts(string(data))
-	for i, c := range certs {
-		filename := path.Join(outputDir, fmt.Sprintf("trusted_ca_%d.crt", i+1))
+	for i, c := range certs.TrustedCACertificates {
+		filename := path.Join(outputDir, fmt.Sprintf(certFileFmt, i+1))
 		err = ioutil.WriteFile(filename, []byte(c), 0600)
 		if err != nil {
 			log.Println(err)
 			os.Exit(1)
 		}
 	}
-
 }
 
 func printUsage() {
@@ -52,7 +68,7 @@ func printUsage() {
 	log.Printf("Usage: %s TRUSTED_CERTS_FILE DESTINATION_DIRECTORY\n", filepath.Base(os.Args[0]))
 }
 
-func splitCerts(certs string) []string {
+func splitCerts(certs string) Certs {
 	result := strings.SplitAfter(certs, "-----END CERTIFICATE-----")
 	for i, cert := range result {
 		start := strings.Index(cert, "-----BEGIN CERTIFICATE-----")
@@ -60,5 +76,5 @@ func splitCerts(certs string) []string {
 			result[i] = cert[start:len(cert)]
 		}
 	}
-	return result[:len(result)-1]
+	return Certs{TrustedCACertificates: result[:len(result)-1]}
 }
