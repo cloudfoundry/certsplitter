@@ -68,13 +68,13 @@ var _ = Describe("Certsplitter", func() {
 
 		})
 
-		Context("when the input file is json, with an array of certs", func() {
+		Context("when the input file is json, with an array of entries that are one or more certs", func() {
 			BeforeEach(func() {
 				trustedCertsPath = path.Join(os.Getenv("GOPATH"), "src/code.cloudfoundry.org/certsplitter/cmd/certsplitter/fixtures/trusted-certs.json")
 				certsplitterCmd = exec.Command(certsplitterPath, trustedCertsPath, certDirectory)
 			})
 
-			It("produces a cert file for each element of the array", func() {
+			It("produces a cert file for each certificate in the json file", func() {
 				err := certsplitterCmd.Run()
 				Expect(err).NotTo(HaveOccurred())
 
@@ -104,7 +104,7 @@ var _ = Describe("Certsplitter", func() {
 				})
 
 				Expect(err).NotTo(HaveOccurred())
-				Expect(count).To(Equal(2))
+				Expect(count).To(Equal(4))
 			})
 		})
 	})
