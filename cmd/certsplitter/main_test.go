@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
@@ -17,13 +16,22 @@ import (
 
 var _ = Describe("Certsplitter", func() {
 	var (
-		certsplitterCmd                 *exec.Cmd
-		trustedCertsPath, certDirectory string
+		certsplitterCmd                                  *exec.Cmd
+		trustedCertsDir, trustedCertsPath, certDirectory string
 	)
 
 	BeforeEach(func() {
 		var err error
-		trustedCertsPath = path.Join(os.Getenv("GOPATH"), "src/code.cloudfoundry.org/certsplitter/cmd/certsplitter/fixtures/trusted-certs.crt")
+		trustedCertsDir = filepath.Join(
+			os.Getenv("GOPATH"),
+			"src",
+			"code.cloudfoundry.org",
+			"certsplitter",
+			"cmd",
+			"certsplitter",
+			"fixtures",
+		)
+		trustedCertsPath = filepath.Join(trustedCertsDir, "trusted-certs.crt")
 		certDirectory, err = ioutil.TempDir("", "certsplitter-test")
 		Expect(err).NotTo(HaveOccurred())
 		certsplitterCmd = exec.Command(certsplitterPath, trustedCertsPath, certDirectory)
@@ -68,13 +76,13 @@ var _ = Describe("Certsplitter", func() {
 
 		})
 
-		Context("when the input file is json, with an array of certs", func() {
+		Context("when the input file is json, with an array of entries that are one or more certs", func() {
 			BeforeEach(func() {
-				trustedCertsPath = path.Join(os.Getenv("GOPATH"), "src/code.cloudfoundry.org/certsplitter/cmd/certsplitter/fixtures/trusted-certs.json")
+				trustedCertsPath = filepath.Join(trustedCertsDir, "trusted-certs.json")
 				certsplitterCmd = exec.Command(certsplitterPath, trustedCertsPath, certDirectory)
 			})
 
-			It("produces a cert file for each element of the array", func() {
+			It("produces a cert file for each certificate in the json file", func() {
 				err := certsplitterCmd.Run()
 				Expect(err).NotTo(HaveOccurred())
 
@@ -104,7 +112,7 @@ var _ = Describe("Certsplitter", func() {
 				})
 
 				Expect(err).NotTo(HaveOccurred())
-				Expect(count).To(Equal(2))
+				Expect(count).To(Equal(4))
 			})
 		})
 	})
@@ -167,16 +175,14 @@ var _ = Describe("Certsplitter", func() {
 		})
 
 		It("logs an error to stderr", func() {
-			output, err := certsplitterCmd.CombinedOutput()
+			_, err := certsplitterCmd.CombinedOutput()
 			Expect(err).To(HaveOccurred())
 			Expect(err).To(BeAssignableToTypeOf(&exec.ExitError{}))
-			Expect(string(output)).To(ContainSubstring("no such file or directory"))
 		})
 	})
 
 	Context("when the output directory does not exist", func() {
 		BeforeEach(func() {
-			trustedCertsPath := path.Join(os.Getenv("GOPATH"), "src/code.cloudfoundry.org/certsplitter/cmd/certsplitter/fixtures/trusted-certs.crt")
 			certsplitterCmd = exec.Command(certsplitterPath, trustedCertsPath, "does-not-exist")
 		})
 
@@ -189,10 +195,9 @@ var _ = Describe("Certsplitter", func() {
 		})
 
 		It("logs an error to stderr", func() {
-			output, err := certsplitterCmd.CombinedOutput()
+			_, err := certsplitterCmd.CombinedOutput()
 			Expect(err).To(HaveOccurred())
 			Expect(err).To(BeAssignableToTypeOf(&exec.ExitError{}))
-			Expect(string(output)).To(ContainSubstring("no such file or directory"))
 		})
 	})
 })

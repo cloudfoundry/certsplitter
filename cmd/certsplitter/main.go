@@ -16,6 +16,14 @@ type Certs struct {
 	TrustedCACertificates []string `json:"trusted_ca_certificates"`
 }
 
+func (c *Certs) fixCerts() {
+	allCerts := []string{}
+	for _, certs := range c.TrustedCACertificates {
+		allCerts = append(allCerts, splitCerts(certs)...)
+	}
+	c.TrustedCACertificates = allCerts
+}
+
 func main() {
 	log.SetOutput(os.Stderr)
 	flag.Parse()
@@ -47,9 +55,10 @@ func main() {
 			log.Println(err)
 			os.Exit(1)
 		}
+		certs.fixCerts()
 		certFileFmt = "container-trusted-ca-%d.crt"
 	} else {
-		certs = splitCerts(string(data))
+		certs = Certs{TrustedCACertificates: splitCerts(string(data))}
 	}
 
 	outputDir := flag.Args()[1]
@@ -68,7 +77,7 @@ func printUsage() {
 	log.Printf("Usage: %s TRUSTED_CERTS_FILE DESTINATION_DIRECTORY\n", filepath.Base(os.Args[0]))
 }
 
-func splitCerts(certs string) Certs {
+func splitCerts(certs string) []string {
 	result := strings.SplitAfter(certs, "-----END CERTIFICATE-----")
 	for i, cert := range result {
 		start := strings.Index(cert, "-----BEGIN CERTIFICATE-----")
@@ -76,5 +85,5 @@ func splitCerts(certs string) Certs {
 			result[i] = cert[start:len(cert)]
 		}
 	}
-	return Certs{TrustedCACertificates: result[:len(result)-1]}
+	return result[:len(result)-1]
 }
