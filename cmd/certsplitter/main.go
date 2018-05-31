@@ -28,58 +28,6 @@ func (c *Certs) fixCerts() {
 	c.TrustedCACertificates = allCerts
 }
 
-func main() {
-	log.SetOutput(os.Stderr)
-	flag.Parse()
-
-	if len(flag.Args()) < 1 {
-		log.Println("must provide path to trusted certificates file")
-		printUsage()
-		os.Exit(1)
-	}
-
-	if len(flag.Args()) < 2 {
-		log.Println("must provide path to destination folder")
-		printUsage()
-		os.Exit(1)
-	}
-
-	trustedCertsPath := flag.Args()[0]
-	data, err := ioutil.ReadFile(trustedCertsPath)
-	if err != nil {
-		log.Println(err)
-		os.Exit(1)
-	}
-
-	certs := Certs{}
-	if strings.Contains(trustedCertsPath, ".json") {
-		err := json.Unmarshal(data, &certs)
-		if err != nil {
-			log.Println(err)
-			os.Exit(1)
-		}
-	} else {
-		certs = Certs{TrustedCACertificates: []string{string(data)}}
-	}
-
-	certs.fixCerts()
-
-	outputDir := flag.Args()[1]
-	for i, c := range certs.TrustedCACertificates {
-		filename := path.Join(outputDir, fmt.Sprintf(certFileFmt, i+1))
-		err = ioutil.WriteFile(filename, []byte(c), 0600)
-		if err != nil {
-			log.Println(err)
-			os.Exit(1)
-		}
-	}
-}
-
-func printUsage() {
-	log.Println()
-	log.Printf("Usage: %s TRUSTED_CERTS_FILE DESTINATION_DIRECTORY\n", filepath.Base(os.Args[0]))
-}
-
 func splitCerts(certs string) []string {
 	chunks := strings.SplitAfter(certs, "-----END CERTIFICATE-----")
 	result := []string{}
@@ -93,4 +41,83 @@ func splitCerts(certs string) []string {
 		result = append(result, cert)
 	}
 	return result
+}
+
+type flagError string
+
+func (e flagError) Error() string {
+	return string(e)
+}
+
+func (flagError) usageError() {}
+
+type usageError interface {
+	usageError()
+}
+
+func main() {
+	log.SetOutput(os.Stderr)
+
+	must(parseFlags())
+	must(writeCerts())
+}
+
+func parseFlags() error {
+	flag.Parse()
+
+	if len(flag.Args()) < 1 {
+		return flagError("must provide path to trusted certificates file")
+	}
+
+	if len(flag.Args()) < 2 {
+		return flagError("must provide path to destination folder")
+	}
+
+	return nil
+}
+
+func writeCerts() error {
+	trustedCertsPath := flag.Args()[0]
+	data, err := ioutil.ReadFile(trustedCertsPath)
+	if err != nil {
+		return err
+	}
+
+	certs := Certs{}
+	if strings.Contains(trustedCertsPath, ".json") {
+		err := json.Unmarshal(data, &certs)
+		if err != nil {
+			return err
+		}
+	} else {
+		certs = Certs{TrustedCACertificates: []string{string(data)}}
+	}
+
+	certs.fixCerts()
+
+	outputDir := flag.Args()[1]
+	for i, c := range certs.TrustedCACertificates {
+		filename := path.Join(outputDir, fmt.Sprintf(certFileFmt, i+1))
+		err = ioutil.WriteFile(filename, []byte(c), 0600)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func printUsage() {
+	log.Println()
+	log.Printf("Usage: %s TRUSTED_CERTS_FILE DESTINATION_DIRECTORY\n", filepath.Base(os.Args[0]))
+}
+
+func must(err error) {
+	if err != nil {
+		log.Println(err)
+		if _, ok := err.(usageError); ok {
+			printUsage()
+		}
+		os.Exit(1)
+	}
 }
