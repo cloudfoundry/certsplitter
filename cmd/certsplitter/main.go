@@ -78,12 +78,16 @@ func printUsage() {
 }
 
 func splitCerts(certs string) []string {
-	result := strings.SplitAfter(certs, "-----END CERTIFICATE-----")
-	for i, cert := range result {
-		start := strings.Index(cert, "-----BEGIN CERTIFICATE-----")
-		if start > 0 {
-			result[i] = cert[start:len(cert)]
+	chunks := strings.SplitAfter(certs, "-----END CERTIFICATE-----")
+	result := []string{}
+	for _, chunk := range chunks {
+		start := strings.Index(chunk, "-----BEGIN CERTIFICATE-----")
+		if start == -1 {
+			continue
 		}
+
+		cert := chunk[start:len(chunk)] + "\n"
+		result = append(result, cert)
 	}
-	return result[:len(result)-1]
+	return result
 }

@@ -61,6 +61,7 @@ var _ = Describe("Certsplitter", func() {
 				data, err := ioutil.ReadFile(path)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(bytes.HasPrefix(data, []byte("-----BEGIN CERTIFICATE-----"))).To(BeTrue())
+				Expect(bytes.HasSuffix(data, []byte("-----END CERTIFICATE-----\n"))).To(BeTrue(), "cert file does not end in newline")
 
 				block, rest := pem.Decode(data)
 				Expect(rest).To(BeEmpty())
@@ -101,6 +102,7 @@ var _ = Describe("Certsplitter", func() {
 					data, err := ioutil.ReadFile(path)
 					Expect(err).NotTo(HaveOccurred())
 					Expect(bytes.HasPrefix(data, []byte("-----BEGIN CERTIFICATE-----"))).To(BeTrue())
+					Expect(bytes.HasSuffix(data, []byte("-----END CERTIFICATE-----\n"))).To(BeTrue(), "cert file does not end in newline")
 
 					block, rest := pem.Decode(data)
 					Expect(rest).To(BeEmpty())
