@@ -12,6 +12,10 @@ import (
 	"strings"
 )
 
+const (
+	certFileFmt = "trusted_ca_%d.crt"
+)
+
 type Certs struct {
 	TrustedCACertificates []string `json:"trusted_ca_certificates"`
 }
@@ -48,18 +52,17 @@ func main() {
 	}
 
 	certs := Certs{}
-	certFileFmt := "trusted_ca_%d.crt"
 	if strings.Contains(trustedCertsPath, ".json") {
 		err := json.Unmarshal(data, &certs)
 		if err != nil {
 			log.Println(err)
 			os.Exit(1)
 		}
-		certs.fixCerts()
-		certFileFmt = "container-trusted-ca-%d.crt"
 	} else {
-		certs = Certs{TrustedCACertificates: splitCerts(string(data))}
+		certs = Certs{TrustedCACertificates: []string{string(data)}}
 	}
+
+	certs.fixCerts()
 
 	outputDir := flag.Args()[1]
 	for i, c := range certs.TrustedCACertificates {
