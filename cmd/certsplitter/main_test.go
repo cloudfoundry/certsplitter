@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -57,7 +58,7 @@ var _ = Describe("Certsplitter", func() {
 
 				// Files are walked in lexical order
 				count++
-				Expect(filepath.Base(path)).To(Equal(fmt.Sprintf("trusted_ca_%d.crt", count)))
+				Expect(strings.HasSuffix(filepath.Base(path), fmt.Sprintf("%d.crt", count))).To(BeTrue(), "cert filename does not end with sequence number")
 				data, err := ioutil.ReadFile(path)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(bytes.HasPrefix(data, []byte("-----BEGIN CERTIFICATE-----"))).To(BeTrue())

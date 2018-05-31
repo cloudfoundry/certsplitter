@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	certFileFmt = "trusted_ca_%d.crt"
+	certFileFmt = "trusted-ca-%d.crt"
 )
 
 type Certs struct {
