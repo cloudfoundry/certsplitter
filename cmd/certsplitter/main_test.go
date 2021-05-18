@@ -24,7 +24,7 @@ var _ = Describe("Certsplitter", func() {
 	BeforeEach(func() {
 		var err error
 		trustedCertsDir = filepath.Join(
-			os.Getenv("GOPATH"),
+			os.Getenv("DIEGO_RELEASE_DIR"),
 			"src",
 			"code.cloudfoundry.org",
 			"certsplitter",
