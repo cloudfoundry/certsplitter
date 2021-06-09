@@ -23,13 +23,10 @@ var _ = Describe("Certsplitter", func() {
 
 	BeforeEach(func() {
 		var err error
+		wd, err := os.Getwd()
+		Expect(err).To(Succeed())
 		trustedCertsDir = filepath.Join(
-			os.Getenv("DIEGO_RELEASE_DIR"),
-			"src",
-			"code.cloudfoundry.org",
-			"certsplitter",
-			"cmd",
-			"certsplitter",
+			wd,
 			"fixtures",
 		)
 		trustedCertsPath = filepath.Join(trustedCertsDir, "trusted-certs.crt")
