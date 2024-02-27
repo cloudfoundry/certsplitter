@@ -37,7 +37,7 @@ func splitCerts(certs string) []string {
 			continue
 		}
 
-		cert := chunk[start:len(chunk)] + "\n"
+		cert := chunk[start:] + "\n"
 		result = append(result, cert)
 	}
 	return result
