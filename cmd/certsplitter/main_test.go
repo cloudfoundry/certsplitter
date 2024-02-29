@@ -5,7 +5,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -30,7 +29,7 @@ var _ = Describe("Certsplitter", func() {
 			"fixtures",
 		)
 		trustedCertsPath = filepath.Join(trustedCertsDir, "trusted-certs.crt")
-		certDirectory, err = ioutil.TempDir("", "certsplitter-test")
+		certDirectory, err = os.MkdirTemp("", "certsplitter-test")
 		Expect(err).NotTo(HaveOccurred())
 		certsplitterCmd = exec.Command(certsplitterPath, trustedCertsPath, certDirectory)
 	})
@@ -56,7 +55,7 @@ var _ = Describe("Certsplitter", func() {
 				// Files are walked in lexical order
 				count++
 				Expect(strings.HasSuffix(filepath.Base(path), fmt.Sprintf("%d.crt", count))).To(BeTrue(), "cert filename does not end with sequence number")
-				data, err := ioutil.ReadFile(path)
+				data, err := os.ReadFile(path)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(bytes.HasPrefix(data, []byte("-----BEGIN CERTIFICATE-----"))).To(BeTrue())
 				Expect(bytes.HasSuffix(data, []byte("-----END CERTIFICATE-----\n"))).To(BeTrue(), "cert file does not end in newline")
@@ -97,7 +96,7 @@ var _ = Describe("Certsplitter", func() {
 					// Files are walked in lexical order
 					count++
 					Expect(path).To(BeAnExistingFile())
-					data, err := ioutil.ReadFile(path)
+					data, err := os.ReadFile(path)
 					Expect(err).NotTo(HaveOccurred())
 					Expect(bytes.HasPrefix(data, []byte("-----BEGIN CERTIFICATE-----"))).To(BeTrue())
 					Expect(bytes.HasSuffix(data, []byte("-----END CERTIFICATE-----\n"))).To(BeTrue(), "cert file does not end in newline")
