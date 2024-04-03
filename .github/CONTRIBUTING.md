@@ -43,22 +43,23 @@ cd ~/workspace
 git clone https://github.com/cloudfoundry/wg-app-platform-runtime-ci.git
 
 # clone repo
-git clone https://github.com/cloudfoundry/winc-release.git --recursive
-cd winc-release
-
+git clone https://github.com/cloudfoundry/<THIS_REPO>.git --recursive
+cd <THIS_REPO>
 ```
-- Concourse and fly cli with Windows workers
 
 Running Tests
 ---------------
 
+
 - `./scripts/create-docker-container.bash`: This will create a docker container with appropriate mounts.
-- `./scripts/test-in-docker-locally.bash`: Create docker container and run lint and template-tests in a single script.
+- `./scripts/test-in-docker-locally.bash`: Create docker container and run all tests and setup in a single script.
+  - `./scripts/test-in-docker-locally.bash <package> <sub-package>`: For running tests under a specific package and/or sub-package
 
-> [!IMPORTANT]
-> The following scripts is ran against a Concourse worker. Set `FLY_TARGET` (Defaults to `shared`) environment variable to target your installation instead
+> [!TIP]
+> If Running tests for this repo requires a DB flavor. The above scripts will default to mysql DB. Set DB environment variable for alternate DBs. Valid Options: mysql-8.0(or mysql),mysql-5.7,postgres
 
-- `./scripts/docker/build-binaries.bash`: This will build binaries requires for testing this repo
-- `./scripts/docker/test-all.bash`: This will test all submodules
-- `./scripts/docker/test.bash <package>`: This will test a package e.g. winc
+When inside docker container:
 
+- `/repo/scripts/docker/test.bash`: This will run all tests in this repo
+- `/repo/scripts/docker/test.bash <package>`: This will only run a package's tests
+- `/repo/scripts/docker/test.bash <package> <sub-package>`: This will only run sub-package tests for package
